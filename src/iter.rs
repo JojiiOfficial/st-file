@@ -56,6 +56,7 @@ where
         if self.end == 0 {
             return None;
         }
+
         // we use 0 to indicate that the iterator is done
         let item = self.file.get(self.end - 1)?;
         self.end -= 1;

@@ -4,7 +4,7 @@ use std::ops::Index;
 
 /// An In-memory indexable "file" that allows inserting, getting and replacing
 /// variable length [u8] arrays using an ID.
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct MemFile {
     data: Vec<u8>,
     index: Vec<u32>,
@@ -72,43 +72,6 @@ impl MemFile {
         Self { data, index }
     }
 
-    /*
-    /// Inserts Data into the file
-    #[inline]
-    pub fn insert(&mut self, data: &[u8]) -> usize {
-        let pos = self.index.len();
-        self.index.push(self.data.len() as u32);
-        self.data.extend_from_slice(data);
-        pos
-    }
-
-    /// Replaces an entry with new data. This automatically adjusts the index which means the new input can be any size.
-    /// Depending on amount of data stored in MemFile this can take some time
-    pub fn replace(&mut self, pos: usize, data: &[u8]) -> Option<()> {
-        let (start, end) = self.index_range(pos)?;
-        self.data.splice(start..end, data.iter().copied());
-        let diff = data.len() as isize - (start..end).len() as isize;
-
-        for i in self.index.iter_mut().skip(pos + 1) {
-            *i = (*i as isize + diff) as u32;
-        }
-
-        Some(())
-    }
-
-    #[inline]
-    pub fn get(&self, pos: usize) -> Option<&[u8]> {
-        let (start, end) = self.index_range(pos)?;
-        Some(&self.data[start..end])
-    }
-
-    #[inline]
-    pub fn get_unchecked(&self, pos: usize) -> &[u8] {
-        let (start, end) = self.index_range_unchecked(pos);
-        &self.data[start..end]
-    }
-    */
-
     #[inline]
     fn index_range(&self, pos: usize) -> Option<(usize, usize)> {
         let start = *self.index.get(pos)? as usize;
@@ -132,23 +95,8 @@ impl MemFile {
         }
     }
 
-    /*
-    #[inline]
-    pub fn iter(&self) -> MemFileIter<'_> {
-        MemFileIter::new(self)
-    }
-    */
-
-    /*
-    /// Returns the amount of entries in the file
-    #[inline(always)]
-    pub fn len(&self) -> usize {
-        self.index.len()
-    }
-    */
-
     /// Returns the amount of bytes stored in the file
-    #[inline(always)]
+    #[inline]
     pub fn raw_len(&self) -> usize {
         self.data.len()
     }
@@ -164,6 +112,7 @@ impl<I: AsRef<[u8]>> Extend<I> for MemFile {
 }
 
 impl<U: Iterator<Item = impl AsRef<[u8]>>> From<U> for MemFile {
+    #[inline]
     fn from(iter: U) -> Self {
         let mut new = MemFile::new();
         for i in iter {

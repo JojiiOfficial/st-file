@@ -1,8 +1,7 @@
 // Unfinished! Maybe don't make this mutable but rather allow converting between MemFile and MappedFile for mutable access
+use crate::traits::IndexedAccess;
 use memmap2::MmapMut;
 use std::{fs::File, io::Write, path::Path};
-
-use crate::traits::IndexedAccess;
 
 pub struct MappedFile {
     map: MmapMut,

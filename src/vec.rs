@@ -2,7 +2,8 @@ use crate::traits::IndexedAccess;
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
 
-/// A vector based in-memory index
+/// A vector based in-memory index. Not memory efficient at all.
+/// Should only be used for testing purposes
 #[derive(Clone, Serialize, Deserialize)]
 pub struct VecFile {
     data: Vec<Vec<u8>>,
