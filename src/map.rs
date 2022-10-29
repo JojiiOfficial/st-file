@@ -61,7 +61,16 @@ impl MappedFile {
     /// Opens a file as Mapped file
     #[inline]
     fn open_map<P: AsRef<Path>>(path: P) -> Result<Map<perms::Read, Private>, Error> {
-        Ok(Map::load(path.as_ref(), Private, perms::Read)?)
+        let mut file = File::open(path)?;
+        let size = file.metadata()?.len() as usize;
+        let map = Map::bytes(size)
+            .anywhere()
+            .from(&mut file, 0)
+            .with_kind(Private)
+            .with_huge_pages(1)
+            .with(perms::Read)
+            .unwrap();
+        Ok(map)
     }
 }
 
