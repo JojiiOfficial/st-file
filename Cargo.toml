@@ -9,7 +9,9 @@ authors = ["Jojii Jojii ät gmx.net"]
 [dependencies]
 serde = { version = "1.0.140", features = ["derive"] }
 memmap2 = { version = "0.5.5", optional = true }
+bincode = {version = "*", optional=true}
 
 [features]
-default = []
+default = ["typed"]
 mapped = ["memmap2"]
+typed = ['bincode']

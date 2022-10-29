@@ -1,6 +1,8 @@
 pub mod iter;
 pub mod memory;
 pub mod traits;
+#[cfg(feature = "typed")]
+pub mod typed_iter;
 pub mod vec;
 
 #[cfg(feature = "mapped")]

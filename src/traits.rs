@@ -1,5 +1,8 @@
 use crate::iter::IndexedAccessIter;
 
+#[cfg(feature = "typed")]
+use serde::{de::DeserializeOwned, Serialize};
+
 /// Trait to index data
 pub trait IndexedAccess {
     /// Inserts data into the file and returns its ID
@@ -33,3 +36,49 @@ pub trait IndexedAccess {
         self.len() == 0
     }
 }
+
+#[cfg(feature = "typed")]
+pub trait TypedIndexedAccess: IndexedAccess {
+    #[inline]
+    fn insert_typed<T: Serialize>(&mut self, item: &T) -> Result<usize, Box<bincode::ErrorKind>> {
+        let enc = bincode::serialize(item)?;
+        Ok(self.insert(&enc))
+    }
+
+    #[inline]
+    fn get_typed<T: DeserializeOwned>(
+        &self,
+        id: usize,
+    ) -> Result<Option<T>, Box<bincode::ErrorKind>> {
+        let data = self.get(id);
+        if data.is_none() {
+            return Ok(None);
+        }
+
+        let item: T = bincode::deserialize(data.unwrap())?;
+        Ok(Some(item))
+    }
+
+    fn replace_typed<T: Serialize>(
+        &mut self,
+        pos: usize,
+        new: &T,
+    ) -> Result<bool, Box<bincode::ErrorKind>> {
+        let new_enc = bincode::serialize(new)?;
+        let res = self.replace(pos, &new_enc);
+        Ok(res.is_some())
+    }
+
+    /// Returns an iterator over all entries in the file
+    #[inline]
+    fn iter_typed<T>(&self) -> crate::typed_iter::TypedIndexedAccessIter<Self, T>
+    where
+        Self: Sized,
+        T: DeserializeOwned,
+    {
+        crate::typed_iter::TypedIndexedAccessIter::new(self)
+    }
+}
+
+#[cfg(feature = "typed")]
+impl<U: IndexedAccess> TypedIndexedAccess for U {}
