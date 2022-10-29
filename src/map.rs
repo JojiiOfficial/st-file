@@ -17,8 +17,8 @@ pub struct MappedFile {
 impl MappedFile {
     /// Open a memory file mmapped
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
-        let map = Self::open_map(path.as_ref())?;
         let index = Self::read_index(path.as_ref())?;
+        let map = Self::open_map(path.as_ref())?;
         let path = path.as_ref().to_path_buf();
         let len = File::open(&path)?.metadata()?.len() as usize;
         Ok(MappedFile {
@@ -67,9 +67,7 @@ impl MappedFile {
             .anywhere()
             .from(&mut file, 0)
             .with_kind(Private)
-            .with_huge_pages(1)
-            .with(perms::Read)
-            .unwrap();
+            .with(perms::Read)?;
         Ok(map)
     }
 }
