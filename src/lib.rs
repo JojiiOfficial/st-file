@@ -1,4 +1,5 @@
 pub mod iter;
+pub mod mem_index;
 pub mod memory;
 pub mod traits;
 #[cfg(feature = "typed")]

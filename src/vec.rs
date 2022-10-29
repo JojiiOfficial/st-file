@@ -1,4 +1,4 @@
-use crate::traits::IndexedAccess;
+use crate::traits::{IndexedAccess, IndexedAccessMut};
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
 
@@ -23,7 +23,7 @@ impl VecFile {
     }
 }
 
-impl IndexedAccess for VecFile {
+impl IndexedAccessMut for VecFile {
     #[inline]
     fn insert(&mut self, data: &[u8]) -> usize {
         let id = self.data.len();
@@ -36,7 +36,9 @@ impl IndexedAccess for VecFile {
         *self.data.get_mut(pos)? = data.to_vec();
         Some(())
     }
+}
 
+impl IndexedAccess for VecFile {
     #[inline]
     fn get(&self, pos: usize) -> Option<&[u8]> {
         self.data.get(pos).map(|i| i.as_slice())

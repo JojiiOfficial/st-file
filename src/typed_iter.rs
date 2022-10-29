@@ -81,7 +81,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{memory::MemFile, vec::VecFile};
+    use crate::{memory::MemFile, traits::TypedIndexedAccessMut, vec::VecFile};
 
     #[test]
     fn test_iter() {
@@ -90,7 +90,7 @@ mod tests {
     }
 
     // Generic func to test iterator for all implementations
-    fn test<I: TypedIndexedAccess>(mut idx: I) {
+    fn test<I: TypedIndexedAccess + TypedIndexedAccessMut>(mut idx: I) {
         let inp: Vec<_> = (1..10u32).collect();
 
         let mut ids = vec![];

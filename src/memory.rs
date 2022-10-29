@@ -1,4 +1,7 @@
-use crate::traits::IndexedAccess;
+use crate::{
+    mem_index::MemIndex,
+    traits::{IndexedAccess, IndexedAccessMut},
+};
 use serde::{Deserialize, Serialize};
 use std::ops::Index;
 
@@ -6,44 +9,44 @@ use std::ops::Index;
 /// variable length [u8] arrays using an ID.
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct MemFile {
-    data: Vec<u8>,
-    index: Vec<u32>,
+    pub(crate) index: MemIndex,
+    pub(crate) data: Vec<u8>,
 }
 
-impl IndexedAccess for MemFile {
+impl IndexedAccessMut for MemFile {
     #[inline]
     fn insert(&mut self, data: &[u8]) -> usize {
-        let pos = self.index.len();
-        self.index.push(self.data.len() as u32);
+        let id = self.index.insert(self.data.len() as u32);
         self.data.extend_from_slice(data);
-        pos
+        id
     }
 
     #[inline]
     fn replace(&mut self, pos: usize, data: &[u8]) -> Option<()> {
-        let (start, end) = self.index_range(pos)?;
+        let range = self.index.index_item(pos, self.raw_len())?;
 
         // Replace data
-        self.data.splice(start..end, data.iter().copied());
+        self.data.splice(range.clone(), data.iter().copied());
 
         // Update index with new positions in since those could've been changed
-        let diff = data.len() as isize - (start..end).len() as isize;
-        for i in self.index.iter_mut().skip(pos + 1) {
-            *i = (*i as isize + diff) as u32;
-        }
+        let diff = data.len() as isize - range.len() as isize;
+
+        self.index.update_range(pos + 1, diff);
 
         Some(())
     }
+}
 
+impl IndexedAccess for MemFile {
     #[inline]
     fn get(&self, pos: usize) -> Option<&[u8]> {
-        let (start, end) = self.index_range(pos)?;
-        Some(&self.data[start..end])
+        let range = self.index.index_item(pos, self.raw_len())?;
+        Some(&self.data[range])
     }
 
     #[inline]
     fn get_unchecked(&self, pos: usize) -> &[u8] {
-        let (start, end) = self.index_range_unchecked(pos);
+        let (start, end) = unsafe { self.index.index_item_unchecked(pos, self.raw_len()) };
         &self.data[start..end]
     }
 
@@ -63,35 +66,15 @@ impl MemFile {
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             data: Vec::with_capacity(capacity),
-            index: vec![],
+            index: MemIndex::new(),
         }
     }
 
     #[inline]
     pub fn new_raw(data: Vec<u8>, index: Vec<u32>) -> Self {
-        Self { data, index }
-    }
-
-    #[inline]
-    fn index_range(&self, pos: usize) -> Option<(usize, usize)> {
-        let start = *self.index.get(pos)? as usize;
-        let next = self
-            .index
-            .get(pos + 1)
-            .copied()
-            .map(|i| i as usize)
-            .unwrap_or(self.raw_len());
-        Some((start, next))
-    }
-
-    #[inline]
-    fn index_range_unchecked(&self, pos: usize) -> (usize, usize) {
-        let start = *self.index.get(pos).unwrap() as usize;
-        let next_pos = pos + 1;
-        if next_pos < self.index.len() {
-            (start, *self.index.get(next_pos).unwrap() as usize)
-        } else {
-            (start, self.raw_len())
+        Self {
+            data,
+            index: MemIndex::from(index),
         }
     }
 
