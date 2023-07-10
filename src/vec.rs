@@ -4,7 +4,7 @@ use std::ops::Index;
 
 /// A vector based in-memory index. Not memory efficient at all.
 /// Should only be used for testing purposes
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Default, Deserialize)]
 pub struct VecFile {
     data: Vec<Vec<u8>>,
 }
@@ -12,7 +12,7 @@ pub struct VecFile {
 impl VecFile {
     #[inline]
     pub fn new() -> Self {
-        Self { data: vec![] }
+        Self::default()
     }
 
     #[inline]
@@ -60,6 +60,6 @@ impl Index<usize> for VecFile {
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
-        &self.get_unchecked(index)
+        self.get_unchecked(index)
     }
 }

@@ -1,9 +1,8 @@
+use serde::{Deserialize, Serialize};
 use std::ops::Range;
 
-use serde::{Deserialize, Serialize};
-
 /// In memory index for data offsets
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Default, Deserialize, Debug)]
 pub struct MemIndex {
     pub(crate) inner: Vec<u32>,
 }
@@ -11,7 +10,7 @@ pub struct MemIndex {
 impl MemIndex {
     #[inline]
     pub fn new() -> Self {
-        Self { inner: vec![] }
+        Self::default()
     }
 
     /// Inserts a new item to the index and returns its ID
@@ -45,8 +44,11 @@ impl MemIndex {
         Some(start..next)
     }
 
-    /// Same as [`index_item`] but doesn't check bounds. The caller has to ensure that
-    /// `pos` is within the index and `end` correctly points to the last element of the data
+    /// Same as [`index_item`] but doesn't check bounds.
+    ///
+    /// # Safety
+    /// The caller has to ensure that `id` is a valid id of an item in the index and `end`
+    /// correctly pointsn to the last element of the data.
     #[inline]
     pub unsafe fn index_item_unchecked(&self, id: usize, end: usize) -> (usize, usize) {
         let start = *self.inner.get_unchecked(id) as usize;
@@ -84,8 +86,14 @@ impl MemIndex {
         self.inner.len()
     }
 
+    /// Returns `true` if the index is empty.
     #[inline]
-    pub(crate) fn bytes_len(&self) -> usize {
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    #[inline]
+    pub fn bytes_len(&self) -> usize {
         (self.len() * 4) + 8
     }
 }
@@ -94,12 +102,5 @@ impl From<Vec<u32>> for MemIndex {
     #[inline]
     fn from(inner: Vec<u32>) -> Self {
         Self { inner }
-    }
-}
-
-impl Default for MemIndex {
-    #[inline]
-    fn default() -> Self {
-        Self::new()
     }
 }

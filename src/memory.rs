@@ -110,7 +110,7 @@ impl Index<usize> for MemFile {
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
-        &self.get_unchecked(index)
+        self.get_unchecked(index)
     }
 }
 
